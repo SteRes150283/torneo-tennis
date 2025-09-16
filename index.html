@@ -32,7 +32,7 @@ const groups = {
 
 /* =====================================
    MODIFICA I RISULTATI QUI
-   Usa il formato "6-3 6-4" per set vinti
+   Usa il formato "6-3 6-4 10-8" per set vinti
    Usa "-" per match ancora da giocare
 ===================================== */
 let results = {
@@ -70,6 +70,7 @@ function parseScore(score){
   let sets = score.trim().split(/\s+/);
   let aSets=0,bSets=0;
   for (let s of sets){
+    // Gestione punteggi set fino a 10 (per il terzo set)
     const [ga,gb]=s.split('-').map(Number);
     if(isNaN(ga)||isNaN(gb)) continue;
     if(ga>gb) aSets++; else bSets++;
