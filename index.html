@@ -28,7 +28,8 @@ const groups = {
  D:["Claudio Giammarco","Stefano Restaino","Fabio Formichetti","Andrea Marino"]
 };
 
-let results = {}; // Nessun risultato pre-inserito
+// Carica i risultati salvati dal browser (localStorage)
+let results = JSON.parse(localStorage.getItem("results")) || {};
 
 function parseScore(score){
   let sets = score.trim().split(/\s+/);
@@ -48,6 +49,8 @@ function render(){
   for(const g in groups){
     const players=groups[g];
     app.innerHTML+=`<h2>Girone ${g}</h2>`;
+    
+    // Input per le partite
     for(let i=0;i<players.length;i++){
       for(let j=i+1;j<players.length;j++){
         const key = `${players[i]}|${players[j]}`;
@@ -59,6 +62,8 @@ function render(){
           </div>`;
       }
     }
+
+    // Calcolo statistiche
     let stats={};
     players.forEach(p=>stats[p]={points:0,played:0,setW:0,setL:0});
     for(const k in results){
@@ -78,10 +83,14 @@ function render(){
         stats[p1].points+=(r.aSets===0)?0:1;
       }
     }
+
+    // Ordina giocatori per punti e differenza set
     const ordered = Object.entries(stats).sort((a,b)=>
        b[1].points - a[1].points ||
        (b[1].setW-b[1].setL) - (a[1].setW-a[1].setL)
     );
+
+    // Mostra tabella
     let table=`<table><tr>
       <th>Giocatore</th><th>Punti</th><th>Partite</th><th>Set W-L</th>
     </tr>`;
@@ -94,11 +103,14 @@ function render(){
     table+="</table>";
     app.innerHTML+=table;
   }
+
+  // Salvataggio dei risultati all'input
   document.querySelectorAll('input[data-key]').forEach(inp=>{
     inp.onchange=e=>{
       const k=e.target.dataset.key;
       if(e.target.value.trim()==="") delete results[k];
       else results[k]=e.target.value.trim();
+      localStorage.setItem("results", JSON.stringify(results)); // salva nel browser
       render();
     };
   });
