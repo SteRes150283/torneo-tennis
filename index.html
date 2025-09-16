@@ -7,11 +7,10 @@
 <style>
  body {font-family: Arial, sans-serif; padding: 20px; background:#FFE5B4;} 
  h2 {margin-top:40px;}
- .table-wrapper {overflow-x:auto; margin-bottom:20px;}
- table {border-collapse: collapse; width:100%; min-width:420px;}
+ table {border-collapse: collapse; margin-bottom:20px; width:100%;}
  th, td {border:1px solid #999; padding:6px; text-align:center;}
  th {background:#FFD580;}
- input[type="text"]{width:120px; max-width:40%;}
+ input[type="text"]{width:120px;}
  .match-row{margin-bottom:8px;}
  .qualified {background:#b6fcb6 !important; font-weight:bold;}
 </style>
@@ -153,7 +152,7 @@ function render(){
     });
 
     // Tabella
-    let table=`<div class="table-wrapper"><table><tr>
+    let table=`<table><tr>
       <th>Giocatore</th><th>Punti</th><th>Partite</th><th>Set W-L</th>
     </tr>`;
     ordered.forEach(([p,s],idx)=>{
@@ -164,7 +163,7 @@ function render(){
         <td>${s.setW}-${s.setL}</td>
       </tr>`;
     });
-    table+="</table></div>";
+    table+="</table>";
     app.innerHTML+=table;
   }
 
