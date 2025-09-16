@@ -7,11 +7,13 @@
 <style>
  body {font-family: Arial, sans-serif; padding: 20px; background:#FFE5B4;} 
  h2 {margin-top:40px;}
- table {border-collapse: collapse; margin-bottom: 20px; width:100%;}
+ .table-wrapper {overflow-x:auto; margin-bottom:20px;}
+ table {border-collapse: collapse; width:100%; min-width:420px;}
  th, td {border:1px solid #999; padding:6px; text-align:center;}
  th {background:#FFD580;}
- input[type="text"]{width:120px;}
+ input[type="text"]{width:120px; max-width:40%;}
  .match-row{margin-bottom:8px;}
+ .qualified {background:#b6fcb6 !important; font-weight:bold;}
 </style>
 </head>
 <body>
@@ -32,7 +34,7 @@ const groups = {
 
 /* =====================================
    MODIFICA I RISULTATI QUI
-   Usa il formato "6-3 6-4 10-8" per set vinti
+   Usa il formato "6-3 6-4 10-8"
    Usa "-" per match ancora da giocare
 ===================================== */
 let results = {
@@ -66,17 +68,28 @@ let results = {
 };
 
 function parseScore(score){
-  if(score.trim() === "-" || score.trim() === "") return {winner:null, aSets:0, bSets:0};
+  if(score.trim() === "-" || score.trim() === "") return {winner:null, aSets:0, bSets:0, aGames:0, bGames:0};
   let sets = score.trim().split(/\s+/);
-  let aSets=0,bSets=0;
+  let aSets=0,bSets=0,aGames=0,bGames=0;
   for (let s of sets){
-    // Gestione punteggi set fino a 10 (per il terzo set)
     const [ga,gb]=s.split('-').map(Number);
     if(isNaN(ga)||isNaN(gb)) continue;
     if(ga>gb) aSets++; else bSets++;
+    aGames+=ga; bGames+=gb;
   }
   let winner = aSets>bSets?0:1;
-  return {winner,aSets,bSets};
+  return {winner,aSets,bSets,aGames,bGames};
+}
+
+// confronto diretto tra due giocatori
+function headToHead(p1,p2){
+  const key1 = `${p1}|${p2}`;
+  const key2 = `${p2}|${p1}`;
+  const match = results[key1] || results[key2];
+  if(!match || match==="-") return null;
+  const parsed = parseScore(match);
+  if(parsed.winner===null) return null;
+  return parsed.winner===0 ? p1 : p2;
 }
 
 function render(){
@@ -86,6 +99,7 @@ function render(){
     const players=groups[g];
     app.innerHTML+=`<h2>Girone ${g}</h2>`;
     
+    // Input match
     for(let i=0;i<players.length;i++){
       for(let j=i+1;j<players.length;j++){
         const key = `${players[i]}|${players[j]}`;
@@ -98,8 +112,9 @@ function render(){
       }
     }
 
+    // Stats
     let stats={};
-    players.forEach(p=>stats[p]={points:0,played:0,setW:0,setL:0});
+    players.forEach(p=>stats[p]={points:0,played:0,setW:0,setL:0,gameW:0,gameL:0});
     for(const k in results){
       const [p1,p2]=k.split("|");
       if(!stats[p1]||!stats[p2]) continue;
@@ -108,6 +123,8 @@ function render(){
       stats[p1].played++; stats[p2].played++;
       stats[p1].setW+=r.aSets; stats[p1].setL+=r.bSets;
       stats[p2].setW+=r.bSets; stats[p2].setL+=r.aSets;
+      stats[p1].gameW+=r.aGames; stats[p1].gameL+=r.bGames;
+      stats[p2].gameW+=r.bGames; stats[p2].gameL+=r.aGames;
       if(r.winner===0){
         const pts = (r.bSets===0)?3:2;
         stats[p1].points+=pts;
@@ -119,24 +136,39 @@ function render(){
       }
     }
 
-    const ordered = Object.entries(stats).sort((a,b)=>
-       b[1].points - a[1].points ||
-       (b[1].setW-b[1].setL) - (a[1].setW-a[1].setL)
-    );
+    // Ordinamento con spareggi
+    const ordered = Object.entries(stats).sort((a,b)=>{
+      if(b[1].points !== a[1].points) return b[1].points - a[1].points;
+      const h2h = headToHead(a[0],b[0]);
+      if(h2h){
+        if(h2h===a[0]) return -1;
+        if(h2h===b[0]) return 1;
+      }
+      const diffSetA = a[1].setW - a[1].setL;
+      const diffSetB = b[1].setW - b[1].setL;
+      if(diffSetB !== diffSetA) return diffSetB - diffSetA;
+      const diffGameA = a[1].gameW - a[1].gameL;
+      const diffGameB = b[1].gameW - b[1].gameL;
+      return diffGameB - diffGameA;
+    });
 
-    let table=`<table><tr>
+    // Tabella
+    let table=`<div class="table-wrapper"><table><tr>
       <th>Giocatore</th><th>Punti</th><th>Partite</th><th>Set W-L</th>
     </tr>`;
-    for(const [p,s] of ordered){
-      table+=`<tr><td>${p}</td>
-                 <td>${s.points}</td>
-                 <td>${s.played}</td>
-                 <td>${s.setW}-${s.setL}</td></tr>`;
-    }
-    table+="</table>";
+    ordered.forEach(([p,s],idx)=>{
+      table+=`<tr class="${idx<2?'qualified':''}">
+        <td>${p}</td>
+        <td>${s.points}</td>
+        <td>${s.played}</td>
+        <td>${s.setW}-${s.setL}</td>
+      </tr>`;
+    });
+    table+="</table></div>";
     app.innerHTML+=table;
   }
 
+  // Gestione input dinamico
   document.querySelectorAll('input[data-key]').forEach(inp=>{
     inp.onchange=e=>{
       const k=e.target.dataset.key;
