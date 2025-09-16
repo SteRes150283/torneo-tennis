@@ -18,6 +18,8 @@
 <h1>Torneo Tennis – Fase a Gironi</h1>
 <p>Inserisci i punteggi set per set. Lo script calcola automaticamente vincitore, punti e set.</p>
 
+<p><strong>⚠️ ATTENZIONE:</strong> Per aggiornare i risultati permanenti su GitHub Pages, modifica direttamente i valori qui sotto dentro l’oggetto <code>results</code> e ricarica il file su GitHub.</p>
+
 <div id="app"></div>
 
 <script>
@@ -28,26 +30,33 @@ const groups = {
  D:["Claudio Giammarco","Stefano Restaino","Fabio Formichetti","Andrea Marino"]
 };
 
-// Risultati iniziali: match precompilati ma con trattino
+/* =====================================
+   MODIFICA I RISULTATI QUI
+   Usa il formato "6-3 6-4" per set vinti
+   Usa "-" per match ancora da giocare
+===================================== */
 let results = {
   "Andrea Calabrese|Mario Verrocchi":"-",
   "Andrea Calabrese|Francesco Giallonardo":"-",
   "Andrea Calabrese|Fabio Di Marcantonio":"6-4 6-2",
-  "Mario Verrocchi|Francesco Giallonardo":"6-3 6-7 6-10",
+  "Mario Verrocchi|Francesco Giallonardo":"-",
   "Mario Verrocchi|Fabio Di Marcantonio":"-",
   "Francesco Giallonardo|Fabio Di Marcantonio":"-",
+
   "Emanuele Caputo|Fabrizio Giammarco":"-",
   "Emanuele Caputo|Lorenzo De Nuzzo":"-",
   "Emanuele Caputo|Massimiliano Giovannelli":"-",
   "Fabrizio Giammarco|Lorenzo De Nuzzo":"-",
   "Fabrizio Giammarco|Massimiliano Giovannelli":"-",
   "Lorenzo De Nuzzo|Massimiliano Giovannelli":"-",
+
   "Cristian Cianchetta|Matteo Ciampa":"-",
   "Cristian Cianchetta|Ennio Ferzoco":"-",
   "Cristian Cianchetta|Nicolo Grasso":"-",
   "Matteo Ciampa|Ennio Ferzoco":"-",
   "Matteo Ciampa|Nicolo Grasso":"-",
   "Ennio Ferzoco|Nicolo Grasso":"-",
+
   "Claudio Giammarco|Stefano Restaino":"-",
   "Claudio Giammarco|Fabio Formichetti":"-",
   "Claudio Giammarco|Andrea Marino":"-",
@@ -94,7 +103,7 @@ function render(){
       const [p1,p2]=k.split("|");
       if(!stats[p1]||!stats[p2]) continue;
       const r=parseScore(results[k]);
-      if(r.winner === null) continue; // ignora match senza punteggio
+      if(r.winner === null) continue;
       stats[p1].played++; stats[p2].played++;
       stats[p1].setW+=r.aSets; stats[p1].setL+=r.bSets;
       stats[p2].setW+=r.bSets; stats[p2].setL+=r.aSets;
