@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Torneo Tennis – Gironi</title>
 <style>
- body {font-family: Arial, sans-serif; padding: 20px; background:#FFE5B4;} /* sfondo arancione chiaro */
+ body {font-family: Arial, sans-serif; padding: 20px; background:#FFE5B4;} 
  h2 {margin-top:40px;}
  table {border-collapse: collapse; margin-bottom: 20px; width:100%;}
  th, td {border:1px solid #999; padding:6px; text-align:center;}
@@ -28,14 +28,40 @@ const groups = {
  D:["Claudio Giammarco","Stefano Restaino","Fabio Formichetti","Andrea Marino"]
 };
 
-// Carica i risultati salvati dal browser (localStorage)
-let results = JSON.parse(localStorage.getItem("results")) || {};
+// Risultati iniziali: match precompilati ma con trattino
+let results = {
+  "Andrea Calabrese|Mario Verrocchi":"-",
+  "Andrea Calabrese|Francesco Giallonardo":"-",
+  "Andrea Calabrese|Fabio Di Marcantonio":"6-4 6-2",
+  "Mario Verrocchi|Francesco Giallonardo":"6-3 6-7 6-10",
+  "Mario Verrocchi|Fabio Di Marcantonio":"-",
+  "Francesco Giallonardo|Fabio Di Marcantonio":"-",
+  "Emanuele Caputo|Fabrizio Giammarco":"-",
+  "Emanuele Caputo|Lorenzo De Nuzzo":"-",
+  "Emanuele Caputo|Massimiliano Giovannelli":"-",
+  "Fabrizio Giammarco|Lorenzo De Nuzzo":"-",
+  "Fabrizio Giammarco|Massimiliano Giovannelli":"-",
+  "Lorenzo De Nuzzo|Massimiliano Giovannelli":"-",
+  "Cristian Cianchetta|Matteo Ciampa":"-",
+  "Cristian Cianchetta|Ennio Ferzoco":"-",
+  "Cristian Cianchetta|Nicolo Grasso":"-",
+  "Matteo Ciampa|Ennio Ferzoco":"-",
+  "Matteo Ciampa|Nicolo Grasso":"-",
+  "Ennio Ferzoco|Nicolo Grasso":"-",
+  "Claudio Giammarco|Stefano Restaino":"-",
+  "Claudio Giammarco|Fabio Formichetti":"-",
+  "Claudio Giammarco|Andrea Marino":"-",
+  "Stefano Restaino|Fabio Formichetti":"-",
+  "Stefano Restaino|Andrea Marino":"-",
+  "Fabio Formichetti|Andrea Marino":"-"
+};
 
 function parseScore(score){
+  if(score.trim() === "-" || score.trim() === "") return {winner:null, aSets:0, bSets:0};
   let sets = score.trim().split(/\s+/);
   let aSets=0,bSets=0;
   for (let s of sets){
-    let [ga,gb]=s.split('-').map(Number);
+    const [ga,gb]=s.split('-').map(Number);
     if(isNaN(ga)||isNaN(gb)) continue;
     if(ga>gb) aSets++; else bSets++;
   }
@@ -50,11 +76,10 @@ function render(){
     const players=groups[g];
     app.innerHTML+=`<h2>Girone ${g}</h2>`;
     
-    // Input per le partite
     for(let i=0;i<players.length;i++){
       for(let j=i+1;j<players.length;j++){
         const key = `${players[i]}|${players[j]}`;
-        const val = results[key] || "";
+        const val = results[key] || "-";
         app.innerHTML+=`
           <div class="match-row">
             ${players[i]} vs ${players[j]}:
@@ -63,13 +88,13 @@ function render(){
       }
     }
 
-    // Calcolo statistiche
     let stats={};
     players.forEach(p=>stats[p]={points:0,played:0,setW:0,setL:0});
     for(const k in results){
       const [p1,p2]=k.split("|");
       if(!stats[p1]||!stats[p2]) continue;
       const r=parseScore(results[k]);
+      if(r.winner === null) continue; // ignora match senza punteggio
       stats[p1].played++; stats[p2].played++;
       stats[p1].setW+=r.aSets; stats[p1].setL+=r.bSets;
       stats[p2].setW+=r.bSets; stats[p2].setL+=r.aSets;
@@ -84,13 +109,11 @@ function render(){
       }
     }
 
-    // Ordina giocatori per punti e differenza set
     const ordered = Object.entries(stats).sort((a,b)=>
        b[1].points - a[1].points ||
        (b[1].setW-b[1].setL) - (a[1].setW-a[1].setL)
     );
 
-    // Mostra tabella
     let table=`<table><tr>
       <th>Giocatore</th><th>Punti</th><th>Partite</th><th>Set W-L</th>
     </tr>`;
@@ -104,13 +127,11 @@ function render(){
     app.innerHTML+=table;
   }
 
-  // Salvataggio dei risultati all'input
   document.querySelectorAll('input[data-key]').forEach(inp=>{
     inp.onchange=e=>{
       const k=e.target.dataset.key;
-      if(e.target.value.trim()==="") delete results[k];
+      if(e.target.value.trim()==="") results[k]="-";
       else results[k]=e.target.value.trim();
-      localStorage.setItem("results", JSON.stringify(results)); // salva nel browser
       render();
     };
   });
