@@ -67,7 +67,8 @@ let results = {
 };
 
 function parseScore(score){
-  if(score.trim() === "-" || score.trim() === "") return {winner:null, aSets:0, bSets:0, aGames:0, bGames:0};
+  if(score.trim() === "-" || score.trim() === "") 
+    return {winner:null, aSets:0, bSets:0, aGames:0, bGames:0};
   let sets = score.trim().split(/\s+/);
   let aSets=0,bSets=0,aGames=0,bGames=0;
   for (let s of sets){
@@ -91,6 +92,41 @@ function headToHead(p1,p2){
   return parsed.winner===0 ? p1 : p2;
 }
 
+// calcola classifica avulsa per un gruppo di giocatori in parità
+function miniClassifica(players, stats){
+  let subStats = {};
+  players.forEach(p=>subStats[p]={points:0,setW:0,setL:0,gameW:0,gameL:0});
+  for(const k in results){
+    const [p1,p2]=k.split("|");
+    if(!players.includes(p1) || !players.includes(p2)) continue;
+    const r=parseScore(results[k]);
+    if(r.winner===null) continue;
+    subStats[p1].setW+=r.aSets; subStats[p1].setL+=r.bSets;
+    subStats[p2].setW+=r.bSets; subStats[p2].setL+=r.aSets;
+    subStats[p1].gameW+=r.aGames; subStats[p1].gameL+=r.bGames;
+    subStats[p2].gameW+=r.bGames; subStats[p2].gameL+=r.aGames;
+    if(r.winner===0){
+      const pts=(r.bSets===0)?3:2;
+      subStats[p1].points+=pts;
+      subStats[p2].points+=(r.bSets===0)?0:1;
+    } else {
+      const pts=(r.aSets===0)?3:2;
+      subStats[p2].points+=pts;
+      subStats[p1].points+=(r.aSets===0)?0:1;
+    }
+  }
+
+  return Object.entries(subStats).sort((a,b)=>{
+    if(b[1].points!==a[1].points) return b[1].points-a[1].points;
+    const diffSetA=a[1].setW-a[1].setL;
+    const diffSetB=b[1].setW-b[1].setL;
+    if(diffSetB!==diffSetA) return diffSetB-diffSetA;
+    const diffGameA=a[1].gameW-a[1].gameL;
+    const diffGameB=b[1].gameW-b[1].gameL;
+    return diffGameB-diffGameA;
+  }).map(e=>e[0]);
+}
+
 function render(){
   const app=document.getElementById('app');
   app.innerHTML="";
@@ -111,7 +147,7 @@ function render(){
       }
     }
 
-    // Stats
+    // Stats globali
     let stats={};
     players.forEach(p=>stats[p]={points:0,played:0,setW:0,setL:0,gameW:0,gameL:0});
     for(const k in results){
@@ -135,27 +171,54 @@ function render(){
       }
     }
 
-    // Ordinamento con spareggi
-    const ordered = Object.entries(stats).sort((a,b)=>{
-      if(b[1].points !== a[1].points) return b[1].points - a[1].points;
-      const h2h = headToHead(a[0],b[0]);
-      if(h2h){
-        if(h2h===a[0]) return -1;
-        if(h2h===b[0]) return 1;
+    // Ordinamento con gestione parità
+    let ordered = Object.entries(stats);
+    ordered.sort((a,b)=> b[1].points - a[1].points);
+
+    // Risolvi parità
+    let finalOrder=[];
+    let i=0;
+    while(i<ordered.length){
+      const pts=ordered[i][1].points;
+      let tied=[ordered[i][0]];
+      let j=i+1;
+      while(j<ordered.length && ordered[j][1].points===pts){
+        tied.push(ordered[j][0]);
+        j++;
       }
-      const diffSetA = a[1].setW - a[1].setL;
-      const diffSetB = b[1].setW - b[1].setL;
-      if(diffSetB !== diffSetA) return diffSetB - diffSetA;
-      const diffGameA = a[1].gameW - a[1].gameL;
-      const diffGameB = b[1].gameW - b[1].gameL;
-      return diffGameB - diffGameA;
-    });
+      if(tied.length===1){
+        finalOrder.push(ordered[i][0]);
+      } else if(tied.length===2){
+        const h2h=headToHead(tied[0],tied[1]);
+        if(h2h){
+          if(h2h===tied[0]) finalOrder.push(tied[0],tied[1]);
+          else finalOrder.push(tied[1],tied[0]);
+        } else {
+          // fallback: differenza set/giochi globali
+          tied.sort((x,y)=>{
+            const diffSetX=stats[x].setW-stats[x].setL;
+            const diffSetY=stats[y].setW-stats[y].setL;
+            if(diffSetY!==diffSetX) return diffSetY-diffSetX;
+            const diffGameX=stats[x].gameW-stats[x].gameL;
+            const diffGameY=stats[y].gameW-stats[y].gameL;
+            return diffGameY-diffGameX;
+          });
+          finalOrder.push(...tied);
+        }
+      } else {
+        // classifica avulsa
+        const avulsa=miniClassifica(tied,stats);
+        finalOrder.push(...avulsa);
+      }
+      i=j;
+    }
 
     // Tabella
     let table=`<table><tr>
       <th>Giocatore</th><th>Punti</th><th>Partite</th><th>Set W-L</th>
     </tr>`;
-    ordered.forEach(([p,s],idx)=>{
+    finalOrder.forEach((p,idx)=>{
+      const s=stats[p];
       table+=`<tr class="${idx<2?'qualified':''}">
         <td>${p}</td>
         <td>${s.points}</td>
@@ -182,3 +245,4 @@ render();
 </script>
 </body>
 </html>
+
