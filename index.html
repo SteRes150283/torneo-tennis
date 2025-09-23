@@ -95,7 +95,7 @@ function parseScore(score){
   return {winner,aSets,bSets,aGames,bGames};
 }
 
-// confronto diretto tra due giocatori
+// confronto diretto
 function headToHead(p1,p2){
   const key1 = `${p1}|${p2}`;
   const key2 = `${p2}|${p1}`;
@@ -106,7 +106,7 @@ function headToHead(p1,p2){
   return parsed.winner===0 ? p1 : p2;
 }
 
-// calcola classifica avulsa
+// classifica avulsa
 function miniClassifica(players, stats){
   let subStats = {};
   players.forEach(p=>subStats[p]={points:0,setW:0,setL:0,gameW:0,gameL:0});
@@ -161,7 +161,7 @@ function render(){
       }
     }
 
-    // Stats globali
+    // Stats
     let stats={};
     players.forEach(p=>stats[p]={points:0,played:0,setW:0,setL:0,gameW:0,gameL:0});
     for(const k in results){
@@ -185,7 +185,7 @@ function render(){
       }
     }
 
-    // Ordinamento con gestione parità
+    // Ordinamento con parità
     let ordered = Object.entries(stats);
     ordered.sort((a,b)=> b[1].points - a[1].points);
 
@@ -224,9 +224,9 @@ function render(){
       i=j;
     }
 
-    // Tabella con differenza game
+    // Tabella SENZA game w-l
     let table=`<table><tr>
-      <th>Giocatore</th><th>Punti</th><th>Partite</th><th>Set W-L</th><th>Game W-L</th><th>Diff. Game</th>
+      <th>Giocatore</th><th>Punti</th><th>Partite</th><th>Set W-L</th><th>Diff. Game</th>
     </tr>`;
     finalOrder.forEach((p,idx)=>{
       const s=stats[p];
@@ -236,7 +236,6 @@ function render(){
         <td>${s.points}</td>
         <td>${s.played}</td>
         <td>${s.setW}-${s.setL}</td>
-        <td>${s.gameW}-${s.gameL}</td>
         <td>${diffGames>=0?'+':''}${diffGames}</td>
       </tr>`;
     });
@@ -244,7 +243,7 @@ function render(){
     app.innerHTML+=table;
   }
 
-  // Gestione input dinamico
+  // Input dinamico
   document.querySelectorAll('input[data-key]').forEach(inp=>{
     inp.onchange=e=>{
       const k=e.target.dataset.key;
@@ -259,4 +258,6 @@ render();
 </script>
 </body>
 </html>
+
+
 
