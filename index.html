@@ -69,15 +69,29 @@ let results = {
 function parseScore(score){
   if(score.trim() === "-" || score.trim() === "") 
     return {winner:null, aSets:0, bSets:0, aGames:0, bGames:0};
+
   let sets = score.trim().split(/\s+/);
   let aSets=0,bSets=0,aGames=0,bGames=0;
-  for (let s of sets){
-    const [ga,gb]=s.split('-').map(Number);
-    if(isNaN(ga)||isNaN(gb)) continue;
-    if(ga>gb) aSets++; else bSets++;
-    aGames+=ga; bGames+=gb;
-  }
-  let winner = aSets>bSets?0:1;
+
+  sets.forEach((s, idx) => {
+    let [ga, gb] = s.split('-').map(Number);
+    if(isNaN(ga)||isNaN(gb)) return;
+
+    // Se siamo al terzo set e uno dei numeri è >= 10 → match tie-break
+    if(idx === 2 && (ga >= 10 || gb >= 10)){
+      if(ga > gb){
+        ga = 7; gb = 6;
+      } else {
+        ga = 6; gb = 7;
+      }
+    }
+
+    if(ga > gb) aSets++; else bSets++;
+    aGames += ga; 
+    bGames += gb;
+  });
+
+  let winner = aSets > bSets ? 0 : 1;
   return {winner,aSets,bSets,aGames,bGames};
 }
 
@@ -92,7 +106,7 @@ function headToHead(p1,p2){
   return parsed.winner===0 ? p1 : p2;
 }
 
-// calcola classifica avulsa per un gruppo di giocatori in parità
+// calcola classifica avulsa
 function miniClassifica(players, stats){
   let subStats = {};
   players.forEach(p=>subStats[p]={points:0,setW:0,setL:0,gameW:0,gameL:0});
@@ -175,7 +189,6 @@ function render(){
     let ordered = Object.entries(stats);
     ordered.sort((a,b)=> b[1].points - a[1].points);
 
-    // Risolvi parità
     let finalOrder=[];
     let i=0;
     while(i<ordered.length){
@@ -194,7 +207,6 @@ function render(){
           if(h2h===tied[0]) finalOrder.push(tied[0],tied[1]);
           else finalOrder.push(tied[1],tied[0]);
         } else {
-          // fallback: differenza set/giochi globali
           tied.sort((x,y)=>{
             const diffSetX=stats[x].setW-stats[x].setL;
             const diffSetY=stats[y].setW-stats[y].setL;
@@ -206,24 +218,26 @@ function render(){
           finalOrder.push(...tied);
         }
       } else {
-        // classifica avulsa
         const avulsa=miniClassifica(tied,stats);
         finalOrder.push(...avulsa);
       }
       i=j;
     }
 
-    // Tabella
+    // Tabella con differenza game
     let table=`<table><tr>
-      <th>Giocatore</th><th>Punti</th><th>Partite</th><th>Set W-L</th>
+      <th>Giocatore</th><th>Punti</th><th>Partite</th><th>Set W-L</th><th>Game W-L</th><th>Diff. Game</th>
     </tr>`;
     finalOrder.forEach((p,idx)=>{
       const s=stats[p];
+      const diffGames = s.gameW - s.gameL;
       table+=`<tr class="${idx<2?'qualified':''}">
         <td>${p}</td>
         <td>${s.points}</td>
         <td>${s.played}</td>
         <td>${s.setW}-${s.setL}</td>
+        <td>${s.gameW}-${s.gameL}</td>
+        <td>${diffGames>=0?'+':''}${diffGames}</td>
       </tr>`;
     });
     table+="</table>";
@@ -245,3 +259,4 @@ render();
 </script>
 </body>
 </html>
+
