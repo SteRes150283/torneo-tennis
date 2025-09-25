@@ -1,263 +1,474 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Torneo Tennis – Gironi</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Torneo Tennis – Gironi e Tabellone</title>
 <style>
- body {font-family: Arial, sans-serif; padding: 20px; background:#FFE5B4;} 
- h2 {margin-top:40px;}
- table {border-collapse: collapse; margin-bottom:20px; width:100%;}
- th, td {border:1px solid #999; padding:6px; text-align:center;}
- th {background:#FFD580;}
- input[type="text"]{width:120px;}
- .match-row{margin-bottom:8px;}
- .qualified {background:#b6fcb6 !important; font-weight:bold;}
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background: #FFE5B4;
+  }
+  h1 {
+    margin-bottom: 10px;
+  }
+  h2 {
+    margin-top: 40px;
+  }
+  table {
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  th,
+  td {
+    border: 1px solid #999;
+    padding: 6px;
+    text-align: center;
+  }
+  th {
+    background: #FFD580;
+  }
+  input[type='text'] {
+    width: 120px;
+  }
+  .match-row {
+    margin-bottom: 8px;
+  }
+  .qualified {
+    background: #b6fcb6 !important;
+    font-weight: bold;
+  }
+  /* Bracket */
+  .bracket {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 40px;
+    gap: 30px;
+    height: auto;
+    position: relative;
+  }
+  .round {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    justify-content: center;
+  }
+  .quarter {
+    width: 180px;
+  }
+  .semi {
+    width: 180px;
+    margin-left: 30px;
+  }
+  .final {
+    width: 150px;
+    margin-left: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .champion {
+    width: 150px;
+    margin-left: 30px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  .match {
+    border: 1px solid #aaa;
+    padding: 6px 12px;
+    background: #fff8dc;
+    min-width: 160px;
+    text-align: center;
+    border-radius: 6px;
+    font-weight: bold;
+  }
 </style>
 </head>
 <body>
-<h1>Torneo Tennis – Fase a Gironi</h1>
-<p>Inserisci i punteggi set per set. Lo script calcola automaticamente vincitore, punti e set.</p>
-
-<p><strong>⚠️ ATTENZIONE:</strong> Per aggiornare i risultati permanenti su GitHub Pages, modifica direttamente i valori qui sotto dentro l’oggetto <code>results</code> e ricarica il file su GitHub.</p>
+<h1>Torneo Tennis – Fase a Gironi & Tabellone</h1>
+<p>
+  Inserisci i punteggi set per set. Lo script calcola automaticamente
+  vincitori e avanzamenti nel tabellone.
+</p>
 
 <div id="app"></div>
 
 <script>
-const groups = {
- A:["Andrea Calabrese","Mario Verrocchi","Francesco Giallonardo","Fabio Di Marcantonio"],
- B:["Emanuele Caputo","Fabrizio Giammarco","Lorenzo De Nuzzo","Simone Carbutto"],
- C:["Cristian Cianchetta","Matteo Ciampa","Ennio Ferzoco","Nicolo Grasso"],
- D:["Claudio Giammarco","Stefano Restaino","Fabio Formichetti","Andrea Marino"]
-};
+  const groups = {
+    A: [
+      'Andrea Calabrese',
+      'Mario Verrocchi',
+      'Francesco Giallonardo',
+      'Fabio Di Marcantonio',
+    ],
+    B: [
+      'Emanuele Caputo',
+      'Fabrizio Giammarco',
+      'Lorenzo De Nuzzo',
+      'Simone Carbutto',
+    ],
+    C: [
+      'Cristian Cianchetta',
+      'Matteo Ciampa',
+      'Ennio Ferzoco',
+      'Nicolo Grasso',
+    ],
+    D: [
+      'Claudio Giammarco',
+      'Stefano Restaino',
+      'Fabio Formichetti',
+      'Andrea Marino',
+    ],
+  };
 
-/* =====================================
-   MODIFICA I RISULTATI QUI
-   Usa il formato "6-3 6-4 10-8"
-   Usa "-" per match ancora da giocare
-===================================== */
-let results = {
-  "Andrea Calabrese|Mario Verrocchi":"-",
-  "Andrea Calabrese|Francesco Giallonardo":"7-6 2-6 10-6",
-  "Andrea Calabrese|Fabio Di Marcantonio":"6-4 6-2",
-  "Mario Verrocchi|Francesco Giallonardo":"6-3 6-7 6-10",
-  "Mario Verrocchi|Fabio Di Marcantonio":"7-5 6-4",
-  "Francesco Giallonardo|Fabio Di Marcantonio":"-",
+  /* RISULTATI GIRONI */
+  let results = {
+    'Andrea Calabrese|Mario Verrocchi': '-',
+    'Andrea Calabrese|Francesco Giallonardo': '7-6 2-6 10-6',
+    'Andrea Calabrese|Fabio Di Marcantonio': '6-4 6-2',
+    'Mario Verrocchi|Francesco Giallonardo': '6-3 6-7 6-10',
+    'Mario Verrocchi|Fabio Di Marcantonio': '7-5 6-4',
+    'Francesco Giallonardo|Fabio Di Marcantonio': '-',
 
-  "Emanuele Caputo|Fabrizio Giammarco":"-",
-  "Emanuele Caputo|Lorenzo De Nuzzo":"6-3 6-2",
-  "Emanuele Caputo|Simone Carbutto":"6-4 6-3",
-  "Fabrizio Giammarco|Lorenzo De Nuzzo":"2-6 4-6",
-  "Fabrizio Giammarco|Simone Carbutto":"6-0 6-3",
-  "Lorenzo De Nuzzo|Simone Carbutto":"-",
+    'Emanuele Caputo|Fabrizio Giammarco': '-',
+    'Emanuele Caputo|Lorenzo De Nuzzo': '6-3 6-2',
+    'Emanuele Caputo|Simone Carbutto': '6-4 6-3',
+    'Fabrizio Giammarco|Lorenzo De Nuzzo': '2-6 4-6',
+    'Fabrizio Giammarco|Simone Carbutto': '6-0 6-3',
+    'Lorenzo De Nuzzo|Simone Carbutto': '-',
 
-  "Cristian Cianchetta|Matteo Ciampa":"-",
-  "Cristian Cianchetta|Ennio Ferzoco":"6-3 6-3",
-  "Cristian Cianchetta|Nicolo Grasso":"6-2 7-5",
-  "Matteo Ciampa|Ennio Ferzoco":"4-6 6-4 10-3",
-  "Matteo Ciampa|Nicolo Grasso":"6-0 4-0 (rit)",
-  "Ennio Ferzoco|Nicolo Grasso":"-",
+    'Cristian Cianchetta|Matteo Ciampa': '-',
+    'Cristian Cianchetta|Ennio Ferzoco': '6-3 6-3',
+    'Cristian Cianchetta|Nicolo Grasso': '6-2 7-5',
+    'Matteo Ciampa|Ennio Ferzoco': '4-6 6-4 10-3',
+    'Matteo Ciampa|Nicolo Grasso': '6-0 4-0 (rit)',
+    'Ennio Ferzoco|Nicolo Grasso': '-',
 
-  "Claudio Giammarco|Stefano Restaino":"-",
-  "Claudio Giammarco|Fabio Formichetti":"6-1 6-3",
-  "Claudio Giammarco|Andrea Marino":"6-2 6-2",
-  "Stefano Restaino|Fabio Formichetti":"6-4 7-5",
-  "Stefano Restaino|Andrea Marino":"6-2 6-1",
-  "Fabio Formichetti|Andrea Marino":"-"
-};
+    'Claudio Giammarco|Stefano Restaino': '-',
+    'Claudio Giammarco|Fabio Formichetti': '6-1 6-3',
+    'Claudio Giammarco|Andrea Marino': '6-2 6-2',
+    'Stefano Restaino|Fabio Formichetti': '6-4 7-5',
+    'Stefano Restaino|Andrea Marino': '6-2 6-1',
+    'Fabio Formichetti|Andrea Marino': '-',
+  };
 
-function parseScore(score){
-  if(score.trim() === "-" || score.trim() === "") 
-    return {winner:null, aSets:0, bSets:0, aGames:0, bGames:0};
+  /* RISULTATI TABELLONE */
+  let knockoutResults = {
+    QF1: '-',
+    QF2: '-',
+    QF3: '-',
+    QF4: '-',
+    SF1: '-',
+    SF2: '-',
+    F: '-',
+  };
 
-  let sets = score.trim().split(/\s+/);
-  let aSets=0,bSets=0,aGames=0,bGames=0;
+  /* ====================== FUNZIONI ====================== */
 
-  sets.forEach((s, idx) => {
-    let [ga, gb] = s.split('-').map(Number);
-    if(isNaN(ga)||isNaN(gb)) return;
+  function parseScore(score) {
+    if (score.trim() === '-' || score.trim() === '') return { winner: null, aSets: 0, bSets: 0, aGames: 0, bGames: 0 };
 
-    // Se siamo al terzo set e uno dei numeri è >= 10 → match tie-break
-    if(idx === 2 && (ga >= 10 || gb >= 10)){
-      if(ga > gb){
-        ga = 7; gb = 6;
-      } else {
-        ga = 6; gb = 7;
-      }
-    }
+    let sets = score.trim().split(/\s+/);
+    let aSets = 0,
+      bSets = 0,
+      aGames = 0,
+      bGames = 0;
 
-    if(ga > gb) aSets++; else bSets++;
-    aGames += ga; 
-    bGames += gb;
-  });
+    sets.forEach((s, idx) => {
+      let [ga, gb] = s.split('-').map(Number);
+      if (isNaN(ga) || isNaN(gb)) return;
 
-  let winner = aSets > bSets ? 0 : 1;
-  return {winner,aSets,bSets,aGames,bGames};
-}
-
-// confronto diretto
-function headToHead(p1,p2){
-  const key1 = `${p1}|${p2}`;
-  const key2 = `${p2}|${p1}`;
-  const match = results[key1] || results[key2];
-  if(!match || match==="-") return null;
-  const parsed = parseScore(match);
-  if(parsed.winner===null) return null;
-  return parsed.winner===0 ? p1 : p2;
-}
-
-// classifica avulsa
-function miniClassifica(players, stats){
-  let subStats = {};
-  players.forEach(p=>subStats[p]={points:0,setW:0,setL:0,gameW:0,gameL:0});
-  for(const k in results){
-    const [p1,p2]=k.split("|");
-    if(!players.includes(p1) || !players.includes(p2)) continue;
-    const r=parseScore(results[k]);
-    if(r.winner===null) continue;
-    subStats[p1].setW+=r.aSets; subStats[p1].setL+=r.bSets;
-    subStats[p2].setW+=r.bSets; subStats[p2].setL+=r.aSets;
-    subStats[p1].gameW+=r.aGames; subStats[p1].gameL+=r.bGames;
-    subStats[p2].gameW+=r.bGames; subStats[p2].gameL+=r.aGames;
-    if(r.winner===0){
-      const pts=(r.bSets===0)?3:2;
-      subStats[p1].points+=pts;
-      subStats[p2].points+=(r.bSets===0)?0:1;
-    } else {
-      const pts=(r.aSets===0)?3:2;
-      subStats[p2].points+=pts;
-      subStats[p1].points+=(r.aSets===0)?0:1;
-    }
-  }
-
-  return Object.entries(subStats).sort((a,b)=>{
-    if(b[1].points!==a[1].points) return b[1].points-a[1].points;
-    const diffSetA=a[1].setW-a[1].setL;
-    const diffSetB=b[1].setW-b[1].setL;
-    if(diffSetB!==diffSetA) return diffSetB-diffSetA;
-    const diffGameA=a[1].gameW-a[1].gameL;
-    const diffGameB=b[1].gameW-b[1].gameL;
-    return diffGameB-diffGameA;
-  }).map(e=>e[0]);
-}
-
-function render(){
-  const app=document.getElementById('app');
-  app.innerHTML="";
-  for(const g in groups){
-    const players=groups[g];
-    app.innerHTML+=`<h2>Girone ${g}</h2>`;
-    
-    // Input match
-    for(let i=0;i<players.length;i++){
-      for(let j=i+1;j<players.length;j++){
-        const key = `${players[i]}|${players[j]}`;
-        const val = results[key] || "-";
-        app.innerHTML+=`
-          <div class="match-row">
-            ${players[i]} vs ${players[j]}:
-            <input type="text" data-key="${key}" value="${val}">
-          </div>`;
-      }
-    }
-
-    // Stats
-    let stats={};
-    players.forEach(p=>stats[p]={points:0,played:0,setW:0,setL:0,gameW:0,gameL:0});
-    for(const k in results){
-      const [p1,p2]=k.split("|");
-      if(!stats[p1]||!stats[p2]) continue;
-      const r=parseScore(results[k]);
-      if(r.winner === null) continue;
-      stats[p1].played++; stats[p2].played++;
-      stats[p1].setW+=r.aSets; stats[p1].setL+=r.bSets;
-      stats[p2].setW+=r.bSets; stats[p2].setL+=r.aSets;
-      stats[p1].gameW+=r.aGames; stats[p1].gameL+=r.bGames;
-      stats[p2].gameW+=r.bGames; stats[p2].gameL+=r.aGames;
-      if(r.winner===0){
-        const pts = (r.bSets===0)?3:2;
-        stats[p1].points+=pts;
-        stats[p2].points+=(r.bSets===0)?0:1;
-      } else {
-        const pts = (r.aSets===0)?3:2;
-        stats[p2].points+=pts;
-        stats[p1].points+=(r.aSets===0)?0:1;
-      }
-    }
-
-    // Ordinamento con parità
-    let ordered = Object.entries(stats);
-    ordered.sort((a,b)=> b[1].points - a[1].points);
-
-    let finalOrder=[];
-    let i=0;
-    while(i<ordered.length){
-      const pts=ordered[i][1].points;
-      let tied=[ordered[i][0]];
-      let j=i+1;
-      while(j<ordered.length && ordered[j][1].points===pts){
-        tied.push(ordered[j][0]);
-        j++;
-      }
-      if(tied.length===1){
-        finalOrder.push(ordered[i][0]);
-      } else if(tied.length===2){
-        const h2h=headToHead(tied[0],tied[1]);
-        if(h2h){
-          if(h2h===tied[0]) finalOrder.push(tied[0],tied[1]);
-          else finalOrder.push(tied[1],tied[0]);
+      if (idx === 2 && (ga >= 10 || gb >= 10)) {
+        // super tie-break
+        if (ga > gb) {
+          ga = 7;
+          gb = 6;
         } else {
-          tied.sort((x,y)=>{
-            const diffSetX=stats[x].setW-stats[x].setL;
-            const diffSetY=stats[y].setW-stats[y].setL;
-            if(diffSetY!==diffSetX) return diffSetY-diffSetX;
-            const diffGameX=stats[x].gameW-stats[x].gameL;
-            const diffGameY=stats[y].gameW-stats[y].gameL;
-            return diffGameY-diffGameX;
-          });
-          finalOrder.push(...tied);
+          ga = 6;
+          gb = 7;
         }
-      } else {
-        const avulsa=miniClassifica(tied,stats);
-        finalOrder.push(...avulsa);
       }
-      i=j;
-    }
-
-    // Tabella SENZA game w-l
-    let table=`<table><tr>
-      <th>Giocatore</th><th>Punti</th><th>Partite</th><th>Set W-L</th><th>Diff. Game</th>
-    </tr>`;
-    finalOrder.forEach((p,idx)=>{
-      const s=stats[p];
-      const diffGames = s.gameW - s.gameL;
-      table+=`<tr class="${idx<2?'qualified':''}">
-        <td>${p}</td>
-        <td>${s.points}</td>
-        <td>${s.played}</td>
-        <td>${s.setW}-${s.setL}</td>
-        <td>${diffGames>=0?'+':''}${diffGames}</td>
-      </tr>`;
+      if (ga > gb) aSets++;
+      else bSets++;
+      aGames += ga;
+      bGames += gb;
     });
-    table+="</table>";
-    app.innerHTML+=table;
+
+    let winner = aSets > bSets ? 0 : 1;
+    return { winner, aSets, bSets, aGames, bGames };
   }
 
-  // Input dinamico
-  document.querySelectorAll('input[data-key]').forEach(inp=>{
-    inp.onchange=e=>{
-      const k=e.target.dataset.key;
-      if(e.target.value.trim()==="") results[k]="-";
-      else results[k]=e.target.value.trim();
-      render();
-    };
-  });
-}
+  function headToHead(p1, p2) {
+    const key1 = `${p1}|${p2}`;
+    const key2 = `${p2}|${p1}`;
+    const match = results[key1] || results[key2];
+    if (!match || match === '-') return null;
+    const parsed = parseScore(match);
+    if (parsed.winner === null) return null;
+    return parsed.winner === 0 ? p1 : p2;
+  }
 
-render();
+  function miniClassifica(players, stats) {
+    let subStats = {};
+    players.forEach((p) => (subStats[p] = { points: 0, setW: 0, setL: 0, gameW: 0, gameL: 0 }));
+    for (const k in results) {
+      const [p1, p2] = k.split('|');
+      if (!players.includes(p1) || !players.includes(p2)) continue;
+      const r = parseScore(results[k]);
+      if (r.winner === null) continue;
+      subStats[p1].setW += r.aSets;
+      subStats[p1].setL += r.bSets;
+      subStats[p2].setW += r.bSets;
+      subStats[p2].setL += r.aSets;
+      subStats[p1].gameW += r.aGames;
+      subStats[p1].gameL += r.bGames;
+      subStats[p2].gameW += r.bGames;
+      subStats[p2].gameL += r.aGames;
+      if (r.winner === 0) {
+        const pts = r.bSets === 0 ? 3 : 2;
+        subStats[p1].points += pts;
+        subStats[p2].points += r.bSets === 0 ? 0 : 1;
+      } else {
+        const pts = r.aSets === 0 ? 3 : 2;
+        subStats[p2].points += pts;
+        subStats[p1].points += r.aSets === 0 ? 0 : 1;
+      }
+    }
+    return Object.entries(subStats)
+      .sort((a, b) => {
+        if (b[1].points !== a[1].points) return b[1].points - a[1].points;
+        const diffSetA = a[1].setW - a[1].setL;
+        const diffSetB = b[1].setW - b[1].setL;
+        if (diffSetB !== diffSetA) return diffSetB - diffSetA;
+        const diffGameA = a[1].gameW - a[1].gameL;
+        const diffGameB = b[1].gameW - b[1].gameL;
+        return diffGameB - diffGameA;
+      })
+      .map((e) => e[0]);
+  }
+
+  function winnerFromMatch(p1, p2, score) {
+    if (!p1 || !p2 || score === '-' || !score) return null;
+    const r = parseScore(score);
+    if (r.winner === null) return null;
+    return r.winner === 0 ? p1 : p2;
+  }
+
+  /* ====================== RENDER ====================== */
+
+  function render() {
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+
+    let qualifiedMap = {};
+
+    // Calcolo qualificati solo se completate 3 partite per ciascun player
+    for (const g in groups) {
+      const players = groups[g];
+      app.innerHTML += `<h2>Girone ${g}</h2>`;
+
+      // Input match
+      for (let i = 0; i < players.length; i++) {
+        for (let j = i + 1; j < players.length; j++) {
+          const key = `${players[i]}|${players[j]}`;
+          const val = results[key] || '-';
+          app.innerHTML += `
+            <div class="match-row">
+              ${players[i]} vs ${players[j]}:
+              <input type="text" data-key="${key}" value="${val}">
+            </div>`;
+        }
+      }
+
+      // Stats
+      let stats = {};
+      players.forEach((p) => (stats[p] = { points: 0, played: 0, setW: 0, setL: 0, gameW: 0, gameL: 0 }));
+      for (const k in results) {
+        const [p1, p2] = k.split('|');
+        if (!stats[p1] || !stats[p2]) continue;
+        const r = parseScore(results[k]);
+        if (r.winner === null) continue;
+        stats[p1].played++;
+        stats[p2].played++;
+        stats[p1].setW += r.aSets;
+        stats[p1].setL += r.bSets;
+        stats[p2].setW += r.bSets;
+        stats[p2].setL += r.aSets;
+        stats[p1].gameW += r.aGames;
+        stats[p1].gameL += r.bGames;
+        stats[p2].gameW += r.bGames;
+        stats[p2].gameL += r.aGames;
+        if (r.winner === 0) {
+          const pts = r.bSets === 0 ? 3 : 2;
+          stats[p1].points += pts;
+          stats[p2].points += r.bSets === 0 ? 0 : 1;
+        } else {
+          const pts = r.aSets === 0 ? 3 : 2;
+          stats[p2].points += pts;
+          stats[p1].points += r.aSets === 0 ? 0 : 1;
+        }
+      }
+
+      // Ordinamento
+      let ordered = Object.entries(stats);
+      ordered.sort((a, b) => b[1].points - a[1].points);
+      let finalOrder = [];
+      let i = 0;
+      while (i < ordered.length) {
+        const pts = ordered[i][1].points;
+        let tied = [ordered[i][0]];
+        let j = i + 1;
+        while (j < ordered.length && ordered[j][1].points === pts) {
+          tied.push(ordered[j][0]);
+          j++;
+        }
+        if (tied.length === 1) {
+          finalOrder.push(ordered[i][0]);
+        } else if (tied.length === 2) {
+          const h2h = headToHead(tied[0], tied[1]);
+          if (h2h) {
+            if (h2h === tied[0]) finalOrder.push(tied[0], tied[1]);
+            else finalOrder.push(tied[1], tied[0]);
+          } else {
+            tied.sort((x, y) => {
+              const diffSetX = stats[x].setW - stats[x].setL;
+              const diffSetY = stats[y].setW - stats[y].setL;
+              if (diffSetY !== diffSetX) return diffSetY - diffSetX;
+              const diffGameX = stats[x].gameW - stats[x].gameL;
+              const diffGameY = stats[y].gameW - stats[y].gameL;
+              return diffGameY - diffGameX;
+            });
+            finalOrder.push(...tied);
+          }
+        } else {
+          const avulsa = miniClassifica(tied, stats);
+          finalOrder.push(...avulsa);
+        }
+        i = j;
+      }
+
+      // Tabella
+      let table = `<table><tr>
+        <th>Giocatore</th><th>Punti</th><th>Partite</th><th>Set W-L</th><th>Diff. Game</th>
+      </tr>`;
+      finalOrder.forEach((p, idx) => {
+        const s = stats[p];
+        const diffGames = s.gameW - s.gameL;
+        table += `<tr class="${idx < 2 ? 'qualified' : ''}">
+          <td>${p}</td>
+          <td>${s.points}</td>
+          <td>${s.played}</td>
+          <td>${s.setW}-${s.setL}</td>
+          <td>${diffGames >= 0 ? '+' : ''}${diffGames}</td>
+        </tr>`;
+      });
+      table += '</table>';
+      app.innerHTML += table;
+
+      // Salva i qualificati solo se hanno giocato tutte le 3 partite
+      qualifiedMap['1' + g] = stats[finalOrder[0]].played === 3 ? finalOrder[0] : '1' + g;
+      qualifiedMap['2' + g] = stats[finalOrder[1]].played === 3 ? finalOrder[1] : '2' + g;
+    }
+
+    renderBracket(qualifiedMap);
+
+    // Input gironi
+    document.querySelectorAll('input[data-key]').forEach((inp) => {
+      inp.onchange = (e) => {
+        const k = e.target.dataset.key;
+        if (e.target.value.trim() === '') results[k] = '-';
+        else results[k] = e.target.value.trim();
+        render();
+      };
+    });
+  }
+
+  /* ====================== TABELLONE ====================== */
+  function renderBracket(q) {
+    const app = document.getElementById('app');
+
+    const qf = [
+      [q['1A'] || '1A', q['2C'] || '2C', 'QF1'],
+      [q['1D'] || '1D', q['2B'] || '2B', 'QF2'],
+      [q['1B'] || '1B', q['2D'] || '2D', 'QF3'],
+      [q['1C'] || '1C', q['2A'] || '2A', 'QF4'],
+    ];
+
+    let sf1a = winnerFromMatch(qf[0][0], qf[0][1], knockoutResults['QF1']);
+    let sf1b = winnerFromMatch(qf[1][0], qf[1][1], knockoutResults['QF2']);
+    let sf2a = winnerFromMatch(qf[2][0], qf[2][1], knockoutResults['QF3']);
+    let sf2b = winnerFromMatch(qf[3][0], qf[3][1], knockoutResults['QF4']);
+
+    let f1 = winnerFromMatch(sf1a, sf1b, knockoutResults['SF1']);
+    let f2 = winnerFromMatch(sf2a, sf2b, knockoutResults['SF2']);
+
+    let champion = winnerFromMatch(f1, f2, knockoutResults['F']);
+
+    let bracketHTML = `<h2>Tabellone Finale</h2>
+      <div class="bracket">
+        <div class="round quarter">`;
+    qf.forEach(([p1, p2, key]) => {
+      bracketHTML += `<div class="match">
+        <div>${p1}</div>
+        <div>${p2}</div>
+        <input type="text" data-ko="${key}" value="${knockoutResults[key]}">
+      </div>`;
+    });
+    bracketHTML += `</div>
+        <div class="round semi">
+          <div class="match">
+            <div>${sf1a || '-'}</div>
+            <div>${sf1b || '-'}</div>
+            <input type="text" data-ko="SF1" value="${knockoutResults['SF1']}">
+          </div>
+          <div class="match">
+            <div>${sf2a || '-'}</div>
+            <div>${sf2b || '-'}</div>
+            <input type="text" data-ko="SF2" value="${knockoutResults['SF2']}">
+          </div>
+        </div>
+        <div class="round final">
+          <div class="match">
+            <div>${f1 || '-'}</div>
+            <div>${f2 || '-'}</div>
+            <input type="text" data-ko="F" value="${knockoutResults['F']}">
+          </div>
+        </div>
+        <div class="round champion">
+          <div class="match">
+            Vincitore: ${champion || '-'}
+          </div>
+        </div>
+      </div>`;
+
+    app.innerHTML += bracketHTML;
+
+    // Input tabellone
+    document.querySelectorAll('input[data-ko]').forEach((inp) => {
+      inp.onchange = (e) => {
+        const k = e.target.dataset.ko;
+        knockoutResults[k] = e.target.value.trim() || '-';
+        render();
+      };
+    });
+  }
+
+  render();
 </script>
 </body>
 </html>
+
+
+
 
 
 
